@@ -18,42 +18,54 @@ if (isset($_POST['tambah_data'])) {
     $beta = $_POST['beta'];
     $gamma = $_POST['gamma'];
 
-    // Query untuk menambahkan data
-    $sql = "INSERT INTO data_input (tahun, quartal, aktual, period, alpha, beta, gamma)
-            VALUES ('$tahun', '$quartal', '$aktual', '$period', '$alpha', '$beta', '$gamma')";
+    // Gunakan prepared statement untuk menambahkan data ke tabel data_input
+    $stmt = $conn->prepare("INSERT INTO data_input (tahun, quartal, aktual, period, alpha, beta, gamma) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssss", $tahun, $quartal, $aktual, $period, $alpha, $beta, $gamma);
 
-    // Menjalankan query
-    if ($conn->query($sql) === TRUE) {
+    if ($stmt->execute()) {
         echo "<p class='success'>Data berhasil ditambahkan.</p>";
 
-        // Kode untuk menghitung dan update hasil_perhitungan
-        // Ambil data untuk periode yang baru dimasukkan
-        $sql_last_row = "SELECT * FROM data_input WHERE period = '$period' ORDER BY tahun DESC LIMIT 1";
-        $result_last_row = $conn->query($sql_last_row);
+        // Ambil data periode yang baru dimasukkan untuk proses perhitungan
+        $stmt_last_row = $conn->prepare("SELECT * FROM data_input WHERE period = ? ORDER BY tahun DESC LIMIT 1");
+        $stmt_last_row->bind_param("s", $period);
+        $stmt_last_row->execute();
+        $result_last_row = $stmt_last_row->get_result();
+
         if ($result_last_row->num_rows > 0) {
             $row = $result_last_row->fetch_assoc();
             $aktual_first_year = $row['aktual'];
-            $YLt_minus_Yt = $aktual_first_year;  // Placeholder untuk perhitungan selanjutnya
-            $AT = 0;
-            $Tt = 0;
-            $St = 0;
-            $Forecast = 0;
-            $e = 0;
-            $MSE = 0;
-            $MAPE = 0;
 
-            // Update hasil perhitungan ke tabel hasil_perhitungan
-            $sql_update = "INSERT INTO hasil_perhitungan (period, YLt_minus_Yt, AT, Tt, St, Forecast, e, MSE, MAPE)
-                           VALUES ('$period', $YLt_minus_Yt, $AT, $Tt, $St, $Forecast, $e, $MSE, $MAPE)";
-            if ($conn->query($sql_update) === TRUE) {
+            // Perhitungan nilai untuk tabel hasil_perhitungan (contoh placeholder)
+            $YLt_minus_Yt = $aktual_first_year; // Placeholder (ubah sesuai rumus Anda)
+            $AT = 0; // Placeholder
+            $Tt = 0; // Placeholder
+            $St = 0; // Placeholder
+            $Forecast = 0; // Placeholder
+            $e = 0; // Placeholder
+            $MSE = 0; // Placeholder
+            $MAPE = 0; // Placeholder
+
+            // Masukkan hasil perhitungan ke tabel hasil_perhitungan
+            $stmt_update = $conn->prepare("INSERT INTO hasil_perhitungan (period, YLt_minus_Yt, AT, Tt, St, Forecast, e, MSE, MAPE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt_update->bind_param("sdddddddd", $period, $YLt_minus_Yt, $AT, $Tt, $St, $Forecast, $e, $MSE, $MAPE);
+
+            if ($stmt_update->execute()) {
                 echo "<p class='success'>Hasil perhitungan berhasil diupdate.</p>";
             } else {
-                echo "<p class='error'>Error: " . $conn->error . "</p>";
+                echo "<p class='error'>Error: " . $stmt_update->error . "</p>";
             }
+
+            $stmt_update->close(); // Tutup prepared statement
+        } else {
+            echo "<p class='error'>Data periode yang dimasukkan tidak ditemukan.</p>";
         }
+
+        $stmt_last_row->close(); // Tutup prepared statement
     } else {
-        echo "<p class='error'>Error: " . $conn->error . "</p>";
+        echo "<p class='error'>Error: " . $stmt->error . "</p>";
     }
+
+    $stmt->close(); // Tutup prepared statement
 }
 
 
@@ -69,39 +81,54 @@ if (isset($_POST['edit_data'])) {
     $beta = $_POST['beta'];
     $gamma = $_POST['gamma'];
 
-    // Query untuk mengupdate data
-    $sql = "UPDATE data_input SET tahun='$tahun', quartal='$quartal', aktual='$aktual', period='$period', alpha='$alpha', beta='$beta', gamma='$gamma' WHERE id='$id'";
+    // Gunakan prepared statement untuk mengupdate data di tabel data_input
+    $stmt = $conn->prepare("UPDATE data_input SET tahun = ?, quartal = ?, aktual = ?, period = ?, alpha = ?, beta = ?, gamma = ? WHERE id = ?");
+    $stmt->bind_param("sssssssi", $tahun, $quartal, $aktual, $period, $alpha, $beta, $gamma, $id);
 
-    // Menjalankan query
-    if ($conn->query($sql) === TRUE) {
+    if ($stmt->execute()) {
         echo "<p class='success'>Data berhasil diperbarui.</p>";
 
-        // Kode untuk menghitung dan update hasil_perhitungan setelah data diubah
-        $sql_last_row = "SELECT * FROM data_input WHERE id = '$id'";
-        $result_last_row = $conn->query($sql_last_row);
+        // Ambil data setelah diperbarui untuk proses perhitungan
+        $stmt_last_row = $conn->prepare("SELECT * FROM data_input WHERE id = ?");
+        $stmt_last_row->bind_param("i", $id);
+        $stmt_last_row->execute();
+        $result_last_row = $stmt_last_row->get_result();
+
         if ($result_last_row->num_rows > 0) {
             $row = $result_last_row->fetch_assoc();
             $aktual_first_year = $row['aktual'];
-            $YLt_minus_Yt = $aktual_first_year;  // Placeholder perhitungan lainnya
-            $AT = 0;
-            $Tt = 0;
-            $St = 0;
-            $Forecast = 0;
-            $e = 0;
-            $MSE = 0;
-            $MAPE = 0;
+
+            // Perhitungan nilai untuk tabel hasil_perhitungan (contoh placeholder)
+            $YLt_minus_Yt = $aktual_first_year; // Placeholder (ubah sesuai rumus Anda)
+            $AT = 0; // Placeholder
+            $Tt = 0; // Placeholder
+            $St = 0; // Placeholder
+            $Forecast = 0; // Placeholder
+            $e = 0; // Placeholder
+            $MSE = 0; // Placeholder
+            $MAPE = 0; // Placeholder
 
             // Update hasil perhitungan ke tabel hasil_perhitungan
-            $sql_update = "UPDATE hasil_perhitungan SET YLt_minus_Yt = $YLt_minus_Yt, AT = $AT, Tt = $Tt, St = $St, Forecast = $Forecast, e = $e, MSE = $MSE, MAPE = $MAPE WHERE period = '$period'";
-            if ($conn->query($sql_update) === TRUE) {
+            $stmt_update = $conn->prepare("UPDATE hasil_perhitungan SET YLt_minus_Yt = ?, AT = ?, Tt = ?, St = ?, Forecast = ?, e = ?, MSE = ?, MAPE = ? WHERE period = ?");
+            $stmt_update->bind_param("dddddddds", $YLt_minus_Yt, $AT, $Tt, $St, $Forecast, $e, $MSE, $MAPE, $period);
+
+            if ($stmt_update->execute()) {
                 echo "<p class='success'>Hasil perhitungan berhasil diupdate.</p>";
             } else {
-                echo "<p class='error'>Error: " . $conn->error . "</p>";
+                echo "<p class='error'>Error: " . $stmt_update->error . "</p>";
             }
+
+            $stmt_update->close(); // Tutup prepared statement
+        } else {
+            echo "<p class='error'>Data dengan ID tersebut tidak ditemukan.</p>";
         }
+
+        $stmt_last_row->close(); // Tutup prepared statement
     } else {
-        echo "<p class='error'>Error: " . $conn->error . "</p>";
+        echo "<p class='error'>Error: " . $stmt->error . "</p>";
     }
+
+    $stmt->close(); // Tutup prepared statement
 }
 
 
@@ -306,7 +333,7 @@ if ($result_data_input->num_rows > 0) {
         // Inisialisasi variabel untuk perhitungan lainnya
         $alpha = 0.1;  // Misal nilai alpha
         $beta = 0.1;   // Misal nilai beta
-        $gamma = 0.1;  // Misal nilai gamma
+        $gamma = 0.37;  // Misal nilai gamma
 
         // Placeholder untuk perhitungan lain
         $AT = 0;       // Inisialisasi nilai AT
