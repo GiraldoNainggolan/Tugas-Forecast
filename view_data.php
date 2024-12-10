@@ -9,6 +9,7 @@ if ($conn->connect_error) {
 
 // Fungsi untuk menambah data
 if (isset($_POST['tambah_data'])) {
+    // Ambil data input dari form
     $tahun = $_POST['tahun'];
     $quartal = $_POST['quartal'];
     $aktual = $_POST['aktual'];
@@ -17,18 +18,48 @@ if (isset($_POST['tambah_data'])) {
     $beta = $_POST['beta'];
     $gamma = $_POST['gamma'];
 
+    // Query untuk menambahkan data
     $sql = "INSERT INTO data_input (tahun, quartal, aktual, period, alpha, beta, gamma)
             VALUES ('$tahun', '$quartal', '$aktual', '$period', '$alpha', '$beta', '$gamma')";
 
+    // Menjalankan query
     if ($conn->query($sql) === TRUE) {
         echo "<p class='success'>Data berhasil ditambahkan.</p>";
+
+        // Kode untuk menghitung dan update hasil_perhitungan
+        // Ambil data untuk periode yang baru dimasukkan
+        $sql_last_row = "SELECT * FROM data_input WHERE period = '$period' ORDER BY tahun DESC LIMIT 1";
+        $result_last_row = $conn->query($sql_last_row);
+        if ($result_last_row->num_rows > 0) {
+            $row = $result_last_row->fetch_assoc();
+            $aktual_first_year = $row['aktual'];
+            $YLt_minus_Yt = $aktual_first_year;  // Placeholder untuk perhitungan selanjutnya
+            $AT = 0;
+            $Tt = 0;
+            $St = 0;
+            $Forecast = 0;
+            $e = 0;
+            $MSE = 0;
+            $MAPE = 0;
+
+            // Update hasil perhitungan ke tabel hasil_perhitungan
+            $sql_update = "INSERT INTO hasil_perhitungan (period, YLt_minus_Yt, AT, Tt, St, Forecast, e, MSE, MAPE)
+                           VALUES ('$period', $YLt_minus_Yt, $AT, $Tt, $St, $Forecast, $e, $MSE, $MAPE)";
+            if ($conn->query($sql_update) === TRUE) {
+                echo "<p class='success'>Hasil perhitungan berhasil diupdate.</p>";
+            } else {
+                echo "<p class='error'>Error: " . $conn->error . "</p>";
+            }
+        }
     } else {
-        echo "<p class='error'>Error: " . $sql . "<br>" . $conn->error . "</p>";
+        echo "<p class='error'>Error: " . $conn->error . "</p>";
     }
 }
 
+
 // Fungsi untuk mengupdate data
 if (isset($_POST['edit_data'])) {
+    // Ambil data input dari form
     $id = $_POST['id'];
     $tahun = $_POST['tahun'];
     $quartal = $_POST['quartal'];
@@ -38,14 +69,41 @@ if (isset($_POST['edit_data'])) {
     $beta = $_POST['beta'];
     $gamma = $_POST['gamma'];
 
+    // Query untuk mengupdate data
     $sql = "UPDATE data_input SET tahun='$tahun', quartal='$quartal', aktual='$aktual', period='$period', alpha='$alpha', beta='$beta', gamma='$gamma' WHERE id='$id'";
 
+    // Menjalankan query
     if ($conn->query($sql) === TRUE) {
         echo "<p class='success'>Data berhasil diperbarui.</p>";
+
+        // Kode untuk menghitung dan update hasil_perhitungan setelah data diubah
+        $sql_last_row = "SELECT * FROM data_input WHERE id = '$id'";
+        $result_last_row = $conn->query($sql_last_row);
+        if ($result_last_row->num_rows > 0) {
+            $row = $result_last_row->fetch_assoc();
+            $aktual_first_year = $row['aktual'];
+            $YLt_minus_Yt = $aktual_first_year;  // Placeholder perhitungan lainnya
+            $AT = 0;
+            $Tt = 0;
+            $St = 0;
+            $Forecast = 0;
+            $e = 0;
+            $MSE = 0;
+            $MAPE = 0;
+
+            // Update hasil perhitungan ke tabel hasil_perhitungan
+            $sql_update = "UPDATE hasil_perhitungan SET YLt_minus_Yt = $YLt_minus_Yt, AT = $AT, Tt = $Tt, St = $St, Forecast = $Forecast, e = $e, MSE = $MSE, MAPE = $MAPE WHERE period = '$period'";
+            if ($conn->query($sql_update) === TRUE) {
+                echo "<p class='success'>Hasil perhitungan berhasil diupdate.</p>";
+            } else {
+                echo "<p class='error'>Error: " . $conn->error . "</p>";
+            }
+        }
     } else {
         echo "<p class='error'>Error: " . $conn->error . "</p>";
     }
 }
+
 
 // Fungsi untuk menghapus data
 if (isset($_POST['hapus_data'])) {
@@ -224,6 +282,72 @@ $result = $conn->query($sql);
 </body>
 </html>
 
+
+
+
 <?php
+
+// Ambil semua data dari tabel data_input
+$sql_data_input = "SELECT id, period, aktual FROM data_input ORDER BY period ASC";
+$result_data_input = $conn->query($sql_data_input);
+
+if ($result_data_input->num_rows > 0) {
+    $data = []; // Menyimpan data untuk perhitungan
+    while ($row = $result_data_input->fetch_assoc()) {
+        $data[] = $row; // Simpan setiap baris data ke array
+    }
+
+    // Perhitungan YLt_minus_Yt, AT, Tt, St, Forecast, e, MSE, MAPE
+    for ($i = 12; $i < count($data); $i++) { // Mulai dari data ke-13 (C14) ke depan
+        $YLt = $data[$i]['aktual']; // Nilai aktual di periode saat ini
+        $Yt = $data[$i - 12]['aktual']; // Nilai aktual di periode 12 baris sebelumnya
+        $YLt_minus_Yt = abs($YLt - $Yt); // Ambil nilai absolut dari YLt - Yt
+
+        // Inisialisasi variabel untuk perhitungan lainnya
+        $alpha = 0.1;  // Misal nilai alpha
+        $beta = 0.1;   // Misal nilai beta
+        $gamma = 0.1;  // Misal nilai gamma
+
+        // Placeholder untuk perhitungan lain
+        $AT = 0;       // Inisialisasi nilai AT
+        $Tt = 0;       // Inisialisasi nilai Tt
+        $St = 0;       // Inisialisasi nilai St
+        $Forecast = 0; // Inisialisasi nilai Forecast
+
+        // Lakukan perhitungan Holt-Winters (contoh sederhana)
+        $AT = $YLt_minus_Yt * $alpha; // Contoh logika perhitungan AT
+        $Tt = ($YLt_minus_Yt - $St) * $beta; // Contoh logika perhitungan Tt
+        $St = $YLt * $gamma; // Contoh logika perhitungan St
+        $Forecast = $Tt + $St; // Forecast adalah jumlah dari Tt dan St
+
+        // Hitung error dan kesalahan perhitungan lainnya
+        $e = $YLt - $Forecast; // Error adalah selisih antara nilai aktual dan forecast
+        $MSE = pow($e, 2);     // Mean Squared Error
+        $MAPE = abs($e / $YLt) * 100; // Mean Absolute Percentage Error
+
+        // Update kolom hasil perhitungan di tabel hasil_perhitungan
+        $period = $data[$i]['period']; // Gunakan periode untuk referensi update
+        $sql_update = "UPDATE hasil_perhitungan 
+                       SET YLt_minus_Yt = $YLt_minus_Yt,
+                           AT = $AT,
+                           Tt = $Tt,
+                           St = $St,
+                           Forecast = $Forecast,
+                           e = $e,
+                           MSE = $MSE,
+                           MAPE = $MAPE
+                       WHERE period = '$period'";
+
+        if ($conn->query($sql_update) === TRUE) {
+            echo "Data untuk periode $period berhasil diperbarui.<br>";
+        } else {
+            echo "Error: " . $conn->error . "<br>";
+        }
+    }
+} else {
+    echo "Tidak ada data pada tabel data_input.";
+}
+
+
 $conn->close();
 ?>
