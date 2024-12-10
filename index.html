@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metode Holt-Winters</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sistem Prediksi - Metode Holt-Winters</h1>
+        <table id="inputTable">
+            <thead>
+                <tr>
+                    <th>Tahun</th>
+                    <th>Quartal</th>
+                    <th>Aktual</th>
+                    <th>Period</th>
+                    <th>Alpha</th>
+                    <th>Beta</th>
+                    <th>Gamma</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td><input type="number" name="tahun" placeholder="Tahun"></td>
+                    <td>
+                        <select name="quartal">
+                            <option value="Q1">Q1</option>
+                            <option value="Q2">Q2</option>
+                            <option value="Q3">Q3</option>
+                            <option value="Q4">Q4</option>
+                            <option value="Q5">Q4</option>
+                            <option value="Q6">Q4</option>
+                            <option value="Q7">Q4</option>
+                            <option value="Q8">Q4</option>
+                            <option value="Q9">Q4</option>
+                            <option value="Q10">Q4</option>
+                            <option value="Q11">Q4</option>
+                            <option value="Q12">Q4</option>
+                        </select>
+                    </td>
+                    <td><input type="number" name="aktual" placeholder="Aktual"></td>
+                    <td><input type="number" name="period" placeholder="Period"></td>
+                    <td><input type="number" name="alpha" placeholder="Alpha" step="0.01" min="0" max="1"></td>
+                    <td><input type="number" name="beta" placeholder="Beta" step="0.01" min="0" max="1"></td>
+                    <td><input type="number" name="gamma" placeholder="Gamma" step="0.01" min="0" max="1"></td>
+                    <td><button class="deleteRow">Hapus</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="addRow">Tambah Baris</button>
+        <button id="submitData">Kirim Data</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
